@@ -1,74 +1,104 @@
 import streamlit as st
+import cv2
 import numpy as np
 from PIL import Image
-from skimage.transform import resize
+import os
 import io
 
 # --- KONFIGURASI HALAMAN UTAMA WEBSITE ---
 st.set_page_config(
-    page_title="Fitoo VIP - Pure HD Enhancer", 
-    page_icon="📸", 
+    page_title="Fitoo VIP - Photo to Video Converter", 
+    page_icon="🎬", 
     layout="centered"
 )
 
-st.markdown("""
-    <style>
-    .main { background-color: #0f172a; color: #f8fafc; }
-    .stButton>button {
-        background-image: linear-gradient(to right, #1e40af , #3b82f6);
-        color: white; border-radius: 8px; border: none;
-        padding: 10px 24px; font-weight: bold; width: 100%;
-    }
-    h1, h2, h3 { color: #3b82f6 !important; }
-    </style>
-    """, unsafe_allow_html=True)
-
-st.title("📸 Fitoo VIP - Pure HD Enhancer V4")
-st.write("Menggunakan Anti-Aliasing Pixel Reconstruction Engine. Ringan, anti-crash, dan tajam saat di-zoom!")
+st.title("🎬 Fitoo VIP - Photo to Video Converter")
+st.write("Ubah kumpulan foto kamu menjadi sebuah video MP4 berkualitas tinggi secara instan.")
 st.markdown("---")
 
-uploaded_file = st.file_uploader("Pilih atau seret foto kamu ke sini", type=["jpg", "jpeg", "png"])
+# --- INPUT PENGATURAN VIDEO ---
+st.sidebar.header("⚙️ Pengaturan Video")
+fps = st.sidebar.slider("Durasi Kecepatan (Frame Per Second)", min_value=1, max_value=5, value=1, help="Semakin kecil angkanya, semakin lama foto tampil di video (misal: 1 FPS = 1 foto tampil selama 1 detik).")
+video_name = st.sidebar.text_input("Nama File Hasil Video", value="fitoovip_video")
 
-if uploaded_file is not None:
-    image = Image.open(uploaded_file)
-    st.subheader("🔄 Gambar Asli (Sebelum)")
-    st.image(image, use_container_width=True)
-    st.markdown("---")
+# --- FITUR UPLOAD MULTIPLE FOTO ---
+uploaded_files = st.file_uploader(
+    "Upload 2 atau lebih foto kamu di sini (PNG, JPG, JPEG)", 
+    type=["jpg", "jpeg", "png"], 
+    accept_multiple_files=True
+)
+
+if uploaded_files:
+    st.write(f"📂 **{len(uploaded_files)} foto berhasil dipilih.**")
     
-    if st.button("🚀 Proses Jernihkan Gambar"):
-        with st.spinner("Menggandakan kerapatan piksel & memulihkan detail..."):
-            try:
-                # Konversi ke numpy array
-                img_array = np.array(image)
-                
-                # Menggunakan skimage resize dengan anti-aliasing tingkat tinggi (mencegah blur/kotak saat di-zoom)
-                # Menaikkan resolusi sebesar 3x lipat secara murni
-                new_shape = (img_array.shape[0] * 3, img_array.shape[1] * 3, img_array.shape[2])
-                hd_array = resize(img_array, new_shape, order=3, anti_aliasing=True, preserve_range=True)
-                
-                # Konversi kembali ke format gambar unit8
-                hd_array = np.clip(hd_array, 0, 255).astype(np.uint8)
-                result_img = Image.fromarray(hd_array)
-                
-                st.subheader("✨ Hasil Pure HD (Sesudah)")
-                st.image(result_img, use_container_width=True, caption="Resolusi sukses dinaikkan 3x lipat dengan teknik Anti-Aliasing")
-                
-                # Persiapan tombol download
-                buf = io.BytesIO()
-                result_img.save(buf, format="PNG", quality=100)
-                byte_im = buf.getvalue()
-                
-                st.markdown(" ")
-                st.download_button(
-                    label="📥 Download Foto Kualitas Terbaik (PNG)",
-                    data=byte_im,
-                    file_name="FitooVIP_PureHD.png",
-                    mime="image/png"
-                )
-                st.success("Sukses! File siap di-download.")
-                
-            except Exception as e:
-                st.error(f"Terjadi kesalahan saat memproses gambar: {e}")
+    # Menampilkan grid preview foto yang diupload
+    cols = st.columns(4)
+    for idx, file in enumerate(uploaded_files):
+        with cols[idx % 4]:
+            img = Image.open(file)
+            st.image(img, use_container_width=True)
+
+    st.markdown("---")
+
+    # --- TOMBOL PROSES EKSEKUSI ---
+    if st.button("🚀 Mulai Ubah Menjadi Video"):
+        if len(uploaded_files) < 2:
+            st.error("❌ Minimal upload 2 foto atau lebih untuk membuat video!")
+        else:
+            with st.spinner("Sedang menyelaraskan ukuran gambar dan merakit video..."):
+                try:
+                    # 1. Menentukan ukuran (resolusi) standar video berdasarkan foto pertama
+                    first_img = Image.open(uploaded_files[0])
+                    first_array = np.array(first_img.convert('RGB'))
+                    height, width, layers = first_array.shape
+                    size = (width, height)
+
+                    # 2. Inisialisasi Video Writer OpenCV
+                    # Menggunakan codec 'mp4v' agar menghasilkan output .mp4 yang kompatibel di Android/PC
+                    temp_video_path = "temp_output.mp4"
+                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                    video = cv2.VideoWriter(temp_video_path, fourcc, fps, size)
+
+                    # 3. Proses penggabungan foto ke dalam video
+                    for uploaded_file in uploaded_files:
+                        img = Image.open(uploaded_file)
+                        # Pastikan semua format gambar diubah ke RGB dan disamakan ukurannya dengan foto pertama
+                        img_resized = img.convert('RGB').resize((width, height))
+                        
+                        # Konversi ke format array OpenCV (BGR)
+                        img_array = np.array(img_resized)
+                        img_cv = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+                        
+                        # Tulis gambar ke dalam frame video
+                        video.write(img_cv)
+
+                    # Tutup/selesaikan pembuatan video
+                    video.release()
+
+                    # 4. Membaca file video biner untuk tombol download
+                    with open(temp_video_path, "rb") as f:
+                        video_bytes = f.read()
+
+                    st.success("✨ Sukses! Video kamu berhasil dirakit.")
+                    
+                    # Tampilkan preview video langsung di website
+                    st.video(video_bytes)
+
+                    # 5. TOMBOL DOWNLOAD VIDEO
+                    st.markdown(" ")
+                    st.download_button(
+                        label="📥 Download Hasil Video (MP4)",
+                        data=video_bytes,
+                        file_name=f"{video_name}.mp4",
+                        mime="video/mp4"
+                    )
+
+                    # Hapus file sampah sementara di server
+                    if os.path.exists(temp_video_path):
+                        os.remove(temp_video_path)
+
+                except Exception as e:
+                    st.error(f"Terjadi kesalahan saat merakit video: {e}")
 
 st.markdown("---")
-st.caption("Aplikasi Web ini menggunakan modul scikit-image Anti-Aliasing | Khusus untuk Fitoo VIP")
+st.caption("Aplikasi Web Resmi Fitoo VIP | Didukung oleh OpenCV Video Engine")
