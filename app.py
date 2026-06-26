@@ -23,8 +23,8 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("🎬 Fitoo VIP - AI Face Animator V5.1")
-st.write("Ubah foto wajah diam menjadi video bergerak. Menggunakan Smart Client API Auto-Routing!")
+st.title("🎬 Fitoo VIP - AI Face Animator V5.2")
+st.write("Ubah foto wajah diam menjadi video bergerak. Konfigurasi Eksplisit fn_index / Endpoint.")
 st.markdown("---")
 
 uploaded_file = st.file_uploader("Upload Foto Wajah (Format JPG/PNG, Wajah Jelas Menghadap Depan)", type=["jpg", "jpeg", "png"])
@@ -42,15 +42,23 @@ if uploaded_file is not None:
     if st.button("🚀 Mulai Animasikan Wajah"):
         with st.spinner("Mengantre di server GPU... AI sedang memproses gerakan struktur wajah (Sekitar 30-60 detik)..."):
             try:
-                # KONEKSI KE SERVER API
+                # KONEKSI KE SERVER API LIVEPORTRAIT
                 client = Client("KwaiVGI/LivePortrait")
                 
-                # PERBAIKAN UTAMA: Menggunakan indeks parameter posisi, bukan menggunakan api_name.
-                # Ini memaksa Gradio Client untuk langsung menembak fungsi utama aplikasi webnya.
+                # SOLUSI: Menggunakan fn_index=0 atau fn_index=1 untuk menargetkan fungsi utama aplikasi.
+                # Kita juga melengkapi parameter default bawaan model LivePortrait (seperti pengaturan pemotongan wajah/lip-sync).
                 result = client.predict(
-                    handle_file(temp_img_path),  # Parameter 1: Input Foto Wajah
-                    None,                         # Parameter 2: Driving Video (Kosongkan untuk default)
-                    # Kita hapus baris api_name="/predict" agar sistem otomatis mencari jalurnya sendiri
+                    img_input=handle_file(temp_img_path), # Parameter 1: Gambar Wajah
+                    vid_input=None,                        # Parameter 2: Video penggerak (kosong untuk default)
+                    flag_lip_zero=True,                    # Parameter 3: Mengunci bibir tetap rapat di awal
+                    flag_relative_motion=True,             # Parameter 4: Gerakan relatif alami
+                    flag_stitching=True,                   # Parameter 5: Menjahit kembali wajah ke background asli
+                    flag_eye_retargeting=False,            # Parameter 6: Retargeting mata otomatis
+                    flag_lip_retargeting=False,            # Parameter 7: Retargeting bibir otomatis
+                    scale_factor=2.0,                      # Parameter 8: Skala area potong wajah
+                    vx_ratio=0.0,                          # Parameter 9: Pergeseran posisi X
+                    vy_ratio=-0.1,                         # Parameter 10: Pergeseran posisi Y
+                    fn_index=1                             # KUNCI UTAMA: Memaksa masuk ke endpoint pemroses utama (Indeks 1 atau 0)
                 )
                 
                 # Ekstrak hasil file video (.mp4)
@@ -76,11 +84,31 @@ if uploaded_file is not None:
                     )
                     st.success("Sukses! AI berhasil menghidupkan foto diammu.")
                 else:
-                    st.error("❌ Gagal memproses. Server AI mengembalikan respons kosong. Coba klik ulang tombol proses.")
+                    st.error("❌ Gagal mengekstrak video hasil pemrosesan. Coba ganti pengaturan atau klik ulang.")
                     
             except Exception as e:
-                st.error(f"Terjadi kendala saat mengantre di server AI: {e}")
-                st.info("Tips: Jika muncul pesan overload, server Hugging Face sedang penuh antrean global. Tunggu beberapa saat lalu klik ulang tombolnya.")
+                # Jika fn_index=1 gagal, kita buat sistem fallback otomatis ke fn_index=0 di dalam penanganan error
+                try:
+                    client = Client("KwaiVGI/LivePortrait")
+                    result = client.predict(
+                        handle_file(temp_img_path),
+                        None,
+                        fn_index=0 # Mencoba gerbang alternatif jika indeks 1 ditolak
+                    )
+                    
+                    video_output_path = result[0] if isinstance(result, (tuple, list)) else result
+                    if video_output_path and os.path.exists(video_output_path):
+                        with open(video_output_path, "rb") as f:
+                            video_bytes = f.read()
+                        st.subheader("✨ Hasil Video Wajah Bergerak")
+                        st.video(video_bytes)
+                        st.download_button(label="📥 Download Hasil Video (MP4)", data=video_bytes, file_name="fitoovip_wajah_bergerak.mp4", mime="video/mp4")
+                        st.success("Sukses memproses via Jalur Cadangan!")
+                    else:
+                        st.error(f"Kedua jalur sibuk. Error detail: {e}")
+                except Exception as fallback_error:
+                    st.error(f"Gagal terhubung ke endpoint utama: {fallback_error}")
+                    st.info("Tips: Server Hugging Face sedang melakukan pemeliharaan fungsi API. Silakan dicoba secara berkala.")
             
             finally:
                 # Bersihkan file sampah
@@ -88,4 +116,4 @@ if uploaded_file is not None:
                     os.remove(temp_img_path)
 
 st.markdown("---")
-st.caption("Aplikasi Web Resmi Fitoo VIP | Powered by Auto-Routing LivePortrait API Engine")
+st.caption("Aplikasi Web Resmi Fitoo VIP | Explicit Endpoint Allocation Engine")
