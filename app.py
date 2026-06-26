@@ -12,7 +12,7 @@ st.set_page_config(
 
 # 893d297d-03a7-4996-a09c-d33e4c698e0a
 # GANTI teks di bawah ini dengan API Key yang kamu dapatkan dari website DeepAI
-DEEPAI_API_KEY = "MASUKKAN_API_KEY_KAMU_DI_SINI"
+DEEPAI_API_KEY = "893d297d-03a7-4996-a09c-d33e4c698e0a"
 
 st.markdown("""
     <style>
