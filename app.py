@@ -1,78 +1,76 @@
 import streamlit as st
 
-# --- KONFIGURASI HALAMAN UTAMA WEBSITE ---
+# --- 1. KONFIGURASI HALAMAN UTAMA ---
 st.set_page_config(
     page_title="Fitoo VIP - AI Face Animator Hub", 
     page_icon="🎬", 
     layout="centered"
 )
 
-# Tampilan CSS Premium Cyberpunk
+# --- 2. GAYA MODERASI VISUAL (THEME CYBERPUNK PREMIUM) ---
 st.markdown("""
     <style>
     .main { background-color: #0f172a; color: #f8fafc; }
     .card {
         background-color: #1e293b;
-        padding: 20px;
+        padding: 22px;
         border-radius: 12px;
         border-left: 5px solid #3b82f6;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    .stButton>button {
-        background-image: linear-gradient(to right, #1e40af , #3b82f6);
-        color: white; border-radius: 8px; border: none;
-        padding: 10px 24px; font-weight: bold; width: 100%;
-    }
-    h1, h2, h3 { color: #3b82f6 !important; }
-    a { color: #60a5fa !important; text-decoration: none; font-weight: bold; }
+    h1 { color: #3b82f6 !important; font-weight: 800; }
+    h3 { color: #60a5fa !important; margin-top: 0; }
+    p { color: #cbd5e1; font-size: 15px; }
+    li { color: #94a3b8; font-size: 14px; }
     </style>
     """, unsafe_allow_html=True)
 
+# --- 3. HEADER WEBSITE ---
 st.title("🎬 Fitoo VIP - AI Face Animator Hub")
-st.write("Platform khusus untuk mengubah foto wajah diam menjadi video manusia bergerak & hidup.")
+st.write("Selamat datang di pusat komputasi gerakan wajah. Di sini kamu bisa mengubah foto portrait diam menjadi video bergerak hidup mirip manusia asli.")
 st.markdown("---")
 
-st.info("💡 Karena server gratisan membatasi pemrosesan video berat, Fitoo VIP kini terhubung langsung dengan Engine AI Temporal terbaik dunia yang 100% gratis dan stabil.")
+st.info("💡 **Info Kinerja:** Proses animasi video membutuhkan GPU kelas berat. Hub ini menghubungkan kamu langsung ke klaster server kecerdasan buatan (AI Space) secara gratis tanpa membebani memori hosting Streamlit kamu.")
 
-# --- OPSI 1: LALUAN LIVEPORTRAIT (TERBAIK) ---
+# --- 4. SEKSI MODEL 1: LIVEPORTRAIT (GERAKAN WAJAH INSTAN) ---
 st.markdown("""
 <div class="card">
-    <h3>🔥 Opsi 1: LivePortrait Engine (Sangat Instan)</h3>
-    <p>Teknologi AI terbaik saat ini untuk membuat foto wajah berkedip, tersenyum, dan menoleh dengan sangat mulus mirip manusia asli.</p>
+    <h3>🔥 Opsi 1: LivePortrait Engine (Realisme Tinggi)</h3>
+    <p>Model AI terbaik untuk mengekstrak ekspresi mikro. Foto wajahmu akan berkedip, melirik, dan tersenyum dengan transisi piksel yang sangat halus.</p>
     <ul>
-        <li><b>Kelebihan:</b> Tanpa coding, proses instan 5 detik, hasil sangat realistis.</li>
-        <li><b>Status Server:</b> Online 24 Jam (Dedicated GPU).</li>
+        <li><b>Cara Pakai:</b> Taruh foto wajah (menghadap ke depan) pada kotak 'Source Image' di bawah, lalu klik <b>Animate</b>.</li>
+        <li><b>Format Output:</b> MP4 Video HD.</li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
 
-# Menanamkan (Embed) Demo AI LivePortrait langsung di dalam websitemu agar bisa dipakai langsung
-st.subheader("🤖 Jalankan LivePortrait Langsung di Sini:")
+# Menanamkan sistem aplikasi LivePortrait menggunakan iframe
 st.components.v1.iframe(
     src="https://kwai-vgi-liveportrait.hf.space",
-    height=600,
+    height=650,
     scrolling=True
 )
 
 st.markdown("---")
 
-# --- OPSI 2: LALUAN SADTALKER (BISA PAKAI SUARA) ---
+# --- 5. SEKSI MODEL 2: SADTALKER (FOTO BERBICARA + AUDIO) ---
 st.markdown("""
 <div class="card">
-    <h3>🗣️ Opsi 2: SadTalker Engine (Foto Berbicara + Suara)</h3>
-    <p>Jika kamu ingin membuat foto wajahnya tidak cuma bergerak, tapi juga <b>berbicara mengikuti suara/audio</b> yang kamu upload.</p>
+    <h3>🗣️ Opsi 2: SadTalker Engine (Talking Photo)</h3>
+    <p>Gunakan opsi ini jika kamu ingin foto diam tersebut bergerak sembari <b>mengucapkan kalimat tertentu</b> sesuai dengan rekaman suara yang kamu masukkan.</p>
     <ul>
-        <li><b>Cara Pakai:</b> Upload foto wajah, upload rekaman suara (MP3), lalu klik Generate.</li>
+        <li><b>Cara Pakai:</b> Upload foto wajah, upload file rekaman suara (.mp3/.wav), lalu klik tombol generate di dalam panel.</li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
 
-st.subheader("🤖 Jalankan SadTalker Langsung di Sini:")
+# Menanamkan alternatif space SadTalker yang memiliki tingkat kestabilan tinggi
 st.components.v1.iframe(
-    src="https://vinthony-sadtalker.hf.space",
-    height=600,
+    src="https://as61-sadtalker.hf.space", 
+    height=650,
     scrolling=True
 )
 
 st.markdown("---")
-st.caption("Aplikasi Web Resmi Fitoo VIP | Integrasi Dedicated AI Cloud Space")
+st.caption("Aplikasi Web Resmi Fitoo VIP | Dikembangkan oleh fitzz developer © 2026")
